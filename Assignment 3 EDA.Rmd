@@ -1,0 +1,677 @@
+---
+title: "Assignment 3 EDA"
+author: "Vijay Baby Joseph"
+date: "19 March 2018"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(knitr)
+
+data1=read.csv("C:/Users/Administrator/Desktop/DataScience/Exploratory Data Analysis/Datasets/HR Analytics.csv")
+
+
+```
+
+
+####1. Identify percentage of missing values in each column and display the same
+    
+    NO MISSING VALUES
+
+```{r}
+NApercentage <- sapply(data1, function(x){
+		Naperc=sum(is.na(x))/length(x)*100
+		
+			}
+)
+NApercentage
+
+##### NO MISSING VALUES
+
+```
+
+
+####2. Create a function which identify the percentage of outliers in a numerical column and use the function to display the percentage of outliers in all numerical column
+
+Only the following columns have outlers. Remaining columns have no outliers.
+
+YearsWithCurrManager 0.952381
+
+YearsInCurrentRole 1.428571
+
+NumCompaniesWorked 3.537415
+
+TotalWorkingYears 4.285714
+
+StockOptionLevel 5.782313
+
+YearsAtCompany 7.074830
+
+YearsSinceLastPromotion 7.278912
+
+MonthlyIncome 7.755102
+
+PerformanceRating 15.374150
+
+Attrition 16.122449
+
+TrainingTimesLastYear 16.190476
+
+```{r}
+num<-sapply(data1, is.numeric)
+numericalcols<-(data1[,num])
+#View(numericalcols)
+outliers<- sapply(numericalcols, function(x){
+  low<-as.data.frame(quantile(x))
+  firstqrt=low[2,1]
+  thrdqrt=low[4,1]
+  iqr=thrdqrt-firstqrt
+  top=(iqr * 1.5) + thrdqrt
+  bottom=firstqrt - (iqr * 1.5)
+  result=which(x >  top| x < bottom)
+  zz<-(length(result)/length(x)*100)
+  })
+View(outliers)
+
+
+```
+
+
+####3. Apply univariate analysis on categorical columns
+
+The categorical columns in the data set has been divided into nominal and ordinal
+
+```{r}
+
+#Nominal Categorical Variable
+word<-sapply(data1,is.factor)
+#word<-get_category(data1)
+#word
+wordcateg<-data1[,word]
+wordcateg<-subset(wordcateg, select = -c(Over18))### drop useless cols
+#View(wordcateg)
+
+
+
+#Ordinal Categorical Variable
+num<-sapply(data1, is.numeric)
+numericalcols<-(data1[,num])
+#View(numericalcols)
+
+####drop useless cols
+numericalcateg=numericalcols%>%select(Attrition,Education,EnvironmentSatisfaction,JobInvolvement,JobLevel,JobSatisfaction,PerformanceRating,RelationshipSatisfaction,StockOptionLevel,WorkLifeBalance)
+#View(numericalcateg)
+
+categorical=cbind(wordcateg,numericalcateg)
+#View(categorical)
+
+###########################################################################################
+
+```
+
+NOMINAL CATEGORICAL
+```{r}
+##############
+#Business Travel
+q1=wordcateg%>%select(`BusinessTravel`)%>%summarise(total= n(),Frequently = sum(`BusinessTravel`=="Travel_Frequently"),Rarely = sum(`BusinessTravel`=="Travel_Rarely"), None = sum(`BusinessTravel`=="Non-Travel"))
+q2=wordcateg%>%select(`BusinessTravel`)%>%summarise(total= n(),Frequently = sum(`BusinessTravel`=="Travel_Frequently")/total*100,Rarely = sum(`BusinessTravel`=="Travel_Rarely")/total*100, None = sum(`BusinessTravel`=="Non-Travel")/total*100)
+q3=as.data.frame(rbind(q1,q2))
+rownames(q3)<-c("No.","Percentage")
+#View(q3)
+
+ggplot(wordcateg, aes(x=`BusinessTravel`)) + geom_bar(fill='steelblue') + coord_flip()
+
+
+# Most Repeated Value: Travel Rarely
+
+##############
+
+#Department
+q1=wordcateg%>%select(`Department`)%>%summarise(total= n(), ResearchandDevelopment = sum(`Department`=="Research & Development"),Sales = sum(`Department`=="Sales"),HumanResources = sum(`Department`=="Human Resources"))
+q2=wordcateg%>%select(`Department`)%>%summarise(total= n(), ResearchandDevelopment = sum(`Department`=="Research & Development")/total*100,Sales = sum(`Department`=="Sales")/total*100,HumanResources = sum(`Department`=="Human Resources")/total*100)
+
+q3=as.data.frame(rbind(q1,q2))
+rownames(q3)<-c("No.","Percentage")
+#View(q3)
+
+ggplot(wordcateg, aes(x=`Department`)) + geom_bar(fill='steelblue') + coord_flip()
+
+# Most Repeated Value: Research and Development
+
+##############
+
+#Education Field
+q1=wordcateg%>%select(`EducationField`)%>%summarise(total= n(), Medical = sum(`EducationField`=="Medical"),Marketing = sum(`EducationField`=="Marketing"), LifeSciences = sum(`EducationField`=="Life Sciences"),TechnicalDegree = sum(`EducationField`=="Technical Degree"))
+q2=wordcateg%>%select(`EducationField`)%>%summarise(total= n(), Medical = sum(`EducationField`=="Medical")/total*100, Marketing= sum(`EducationField`=="Marketing")/total*100, LifeSciences = sum(`EducationField`=="Life Sciences")/total*100,TechnicalDegree = sum(`EducationField`=="Technical Degree")/total*100)
+q3=as.data.frame(rbind(q1,q2))
+rownames(q3)<-c("No.","Percentage")
+#View(q3)
+
+ggplot(wordcateg, aes(x=`EducationField`)) + geom_bar(fill='steelblue') + coord_flip()
+
+
+
+# Most Repeated Value: Life Sciences
+
+##############
+
+# Gender
+q1=wordcateg%>%select(`Gender`)%>%summarise(total= n(), Male = sum(`Gender`=="Male"),Female = sum(`Gender`=="Female"))
+q2=wordcateg%>%select(`Gender`)%>%summarise(total= n(), Male = sum(`Gender`=="Male")/total*100,Female = sum(`Gender`=="Female")/total*100)
+
+q3=as.data.frame(rbind(q1,q2))
+rownames(q3)<-c("No.","Percentage")
+#View(q3)
+
+plot(wordcateg$Gender)
+
+# Most Repeated Value: Male
+
+##############
+
+
+# Job Role
+q1=wordcateg%>%select(`JobRole`)%>%summarise(total= n(), Manager = sum(`JobRole`=="Manager"),SalesExec = sum(`JobRole`=="Sales Executive"),ResearchDir = sum(`JobRole`=="Research Director"), ResearchScientist = sum(`JobRole`=="Research Scientist") ,HumanResources = sum(`JobRole`=="Human Resources"), HealthcareRep = sum(`JobRole`=="Healthcare Representative"), SalesRep = sum(`JobRole`=="Sales Representative"), MfgDirector= sum(`JobRole`=="Manufacturing Director"), LabTechnician= sum(`JobRole`=="Laboratory Technician"))
+q2=wordcateg%>%select(`JobRole`)%>%summarise(total= n(), Manager = sum(`JobRole`=="Manager")/total*100,SalesExec = sum(`JobRole`=="Sales Executive")/total*100,ResearchDir = sum(`JobRole`=="Research Director")/total*100, ResearchScientist = sum(`JobRole`=="Research Scientist")/total*100 ,HumanResources = sum(`JobRole`=="Human Resources")/total*100, HealthcareRep = sum(`JobRole`=="Healthcare Representative")/total*100, SalesRep = sum(`JobRole`=="Sales Representative")/total*100, MfgDirector= sum(`JobRole`=="Manufacturing Director")/total*100, LabTechnician= sum(`JobRole`=="Laboratory Technician")/total*100)
+
+
+q3=as.data.frame(rbind(q1,q2))
+rownames(q3)<-c("No.","Percentage")
+#View(q3)
+
+ggplot(wordcateg, aes(x=`JobRole`)) + geom_bar(fill='steelblue') +theme(axis.text.x=element_text(angle=60,hjust=1))
+
+# Most Repeated Value: Sales Executive
+
+##############
+
+# Marital Status
+q1=wordcateg%>%select(`MaritalStatus`)%>%summarise(total= n(), Single = sum(`MaritalStatus`=="Single"), Married = sum(`MaritalStatus`=="Married"), Divorced = sum(`MaritalStatus`=="Divorced"))
+q2=wordcateg%>%select(`MaritalStatus`)%>%summarise(total= n(), Single = sum(`MaritalStatus`=="Single")/total*100, Married = sum(`MaritalStatus`=="Married")/total*100, Divorced = sum(`MaritalStatus`=="Divorced")/total*100)
+
+q3=as.data.frame(rbind(q1,q2))
+rownames(q3)<-c("No.","Percentage")
+#View(q3)
+
+ggplot(wordcateg, aes(x=`MaritalStatus`)) + geom_bar(fill='steelblue') 
+
+# Most Repeated Value: Married
+
+##############
+
+# Overtime
+q1=wordcateg%>%select(`OverTime`)%>%summarise(total= n(), Yes = sum(`OverTime`=="Yes"), No = sum(`OverTime`=="No"))
+q2=wordcateg%>%select(`OverTime`)%>%summarise(total= n(), Yes = sum(`OverTime`=="Yes")/total*100, No = sum(`OverTime`=="No")/total*100)
+
+
+q3=as.data.frame(rbind(q1,q2))
+rownames(q3)<-c("No.","Percentage")
+#View(q3)
+
+plot(wordcateg$OverTime)
+
+
+# Most Repeated Value: No
+
+
+
+```
+
+ORDINAL CATEGORICAL
+
+Following variables are Ordinal categorical variables. Though quantitative analysis like mean median mode cannot be applied in the strictest sense, they still give a meaningful description of the dataset.
+
+Automated function at the end.
+
+```{r}
+
+# Attrition
+q1=categorical%>%select(`Attrition`)%>%summarise(total= n(), Leaving = sum(`Attrition`==1), staying = sum(`Attrition`==0))
+#View(q1)
+
+ggplot(categorical, aes(x=`Attrition`)) + geom_bar(fill='steelblue') 
+
+
+#Education
+q1=categorical%>%select(`Education`)%>%summarise(total= n(), Edu1 = sum(`Education`==1), Edu2 = sum(`Education`==2),Edu3 = sum(`Education`==3),Edu4 = sum(`Education`==4),Edu5 = sum(`Education`==5))
+#View(q1)
+
+plot(density(categorical$Education))
+
+# Environoment Satisfaction
+q1=categorical%>%select(`EnvironmentSatisfaction`)%>%summarise(total= n(), EnvSat1 = sum(`EnvironmentSatisfaction`==1), EnvSat2 = sum(`EnvironmentSatisfaction`==2),EnvSat3 = sum(`EnvironmentSatisfaction`==3),EnvSat4 = sum(`EnvironmentSatisfaction`==4))
+#View(q1)
+
+
+plot(density(categorical$EnvironmentSatisfaction))
+
+
+
+#Job Involvement
+q1=categorical%>%select(`JobInvolvement`)%>%summarise(total= n(), JobInvl1 = sum(`JobInvolvement`==1), JobInvl2 = sum(`JobInvolvement`==2),JobInvl3 = sum(`JobInvolvement`==3),JobInvl4 = sum(`JobInvolvement`==4))
+#View(q1)
+
+
+plot(density(categorical$JobInvolvement))
+
+
+#Job Level
+q1=categorical%>%select(`JobLevel`)%>%summarise(total= n(), Lvl1 = sum(`JobLevel`==1), Lvl2 = sum(`JobLevel`==2),Lvl3 = sum(`JobLevel`==3),Lvl4 = sum(`JobLevel`==4))
+#View(q1)
+
+
+plot(density(categorical$JobLevel))
+
+
+#Job Satisfaction
+q1=categorical%>%select(`JobSatisfaction`)%>%summarise(total= n(), JobSatisfaction1 = sum(`JobSatisfaction`==1), JobSatisfaction2 = sum(`JobSatisfaction`==2),JobSatisfaction3 = sum(`JobSatisfaction`==3),JobSatisfaction4 = sum(`JobSatisfaction`==4))
+#View(q1)
+
+
+plot(density(categorical$JobSatisfaction))
+
+
+
+#Performance Rating
+q1=categorical%>%select(`PerformanceRating`)%>%summarise(total= n(), PerformanceRating1 = sum(`PerformanceRating`==1), PerformanceRating2 = sum(`PerformanceRating`==2),PerformanceRating3 = sum(`PerformanceRating`==3),PerformanceRating4 = sum(`PerformanceRating`==4))
+#View(q1)
+
+
+hist(categorical$PerformanceRating)
+
+# Relationship Satisfaction
+q1=categorical%>%select(`RelationshipSatisfaction`)%>%summarise(total= n(), RelationshipSatisfaction1 = sum(`RelationshipSatisfaction`==1), RelationshipSatisfaction2 = sum(`RelationshipSatisfaction`==2),RelationshipSatisfaction3 = sum(`RelationshipSatisfaction`==3),RelationshipSatisfaction4 = sum(`RelationshipSatisfaction`==4))
+#View(q1)
+#
+
+plot(density(categorical$RelationshipSatisfaction))
+
+
+
+# StockOption Level
+q1=categorical%>%select(`StockOptionLevel`)%>%summarise(total= n(), Lvl0 = sum(`StockOptionLevel`==0), Lvl1 = sum(`StockOptionLevel`==1), Lvl2 = sum(`StockOptionLevel`==2),Lvl3 = sum(`StockOptionLevel`==3))
+#View(q1)
+
+
+plot(density(categorical$StockOptionLevel))
+
+
+
+#Work Life Balance
+q1=categorical%>%select(`WorkLifeBalance`)%>%summarise( total= n(),Rating1 = sum(`WorkLifeBalance`==1), Rating2 = sum(`WorkLifeBalance`==2),Rating3 = sum(`WorkLifeBalance`==3),Rating4 = sum(`WorkLifeBalance`==4))
+#View(q1)
+
+plot(density(categorical$WorkLifeBalance))
+
+
+
+
+################### FUNCTION: minimum,maximum,quartile,range,variance,standard deviation,mean,mode##########
+
+fullsummary<-function(data1){
+num<-sapply(data1, is.numeric)
+
+numericalcols<-(data1[,num])
+
+
+minimum=sapply(numericalcols, min, na.rm=T)
+quartile=sapply(numericalcols, quantile, probs=c(0.25,0.5,0.75), na.rm=TRUE)
+maximum=sapply(numericalcols, max, na.rm=T)
+
+range=maximum-minimum
+variance=sapply(numericalcols, var, na.rm=T)
+standarddeviation=sapply(numericalcols, sd, na.rm=T)
+
+mean = sapply(numericalcols, mean, na.rm=T)
+median = sapply(numericalcols, median, na.rm=T)
+mode = sapply(numericalcols, function (x){tail(names(sort(table(x))), 1)})
+
+
+fullstack<-rbind(minimum,maximum,quartile,range,variance,standarddeviation,mean,median,mode)
+fullstack
+}
+View(fullsummary(categorical))
+
+```
+
+####4. Apply bivariate analysis like correlation analysis, crosstab analysis and segmented analysis, wherever necessary and share your inferences
+####5. Include more variables in a charts like scatter plots, multiple box plots, stacked bars etc to identify better insights
+
+
+## Correlation 
+RESULTS: 
+TOP 5 correlations:
+
+  1. MonthlyIncome &JobLevel 0.9502999
+  
+  2. TotalWorkingYears & JOb level 0.7822078
+  
+  3. PerformanceRating & PercentSalaryHike 0.7735500
+  
+  4. TotalWorkingYears & MonthlyIncome 0.7728932
+  
+  5. YearsInCurrentRole & YearsAtCompany 0.7587537
+
+  
+Conclusion: 
+
+  1.Monthly income depends on the job level with  with level 5 employees earning the       highest. 
+  
+  2. Experience/Totalworking years is the most important determinant of promotion
+  
+  3. There is a correlation between performance rating and salary hike, which means that 
+  there may be variable pay based on performance
+  
+  4. Work experience determines pay which is also reflected in the first two conclusions
+  
+  5. The fifth correlation indicates that promotions are harder to come by the longer
+  you stay in the company. Many experienced people are stuck at their current role and 
+  seemed to have reached a glass ceiling.
+  
+  
+
+
+```{r}
+#DROPPING USELESS OR EMPTY COLUMNS
+data2<-subset(data1, select = -c(YearsWithCurrManager,Over18, StandardHours))
+
+######################################CORRELATION ANALysis#############
+correlatiion_analysis= function(df){
+  num<-sapply(df, is.numeric)
+  numericalcols<-(data2[,num])
+  cormat=cor(numericalcols)
+  corel=as.data.frame(as.table(cormat))
+  colnames(corel)<-c("Col 1","Col 2","Correlation")
+  final=corel%>%filter(Correlation>=0.7&Correlation<1)%>%arrange(-Correlation)
+  View(final)
+}
+
+correlatiion_analysis(data2)
+
+#################### SCATTER PLOTS OF CORRELATION ANALYSIS ############
+
+#Monthly Income vs Job Level
+ggplot(data2, aes(x=data2$MonthlyIncome, y=data2$JobLevel) )+ geom_point() +  xlab("Monthly Income") +  ylab("Job Level") +  geom_smooth()
+
+#Total Working Years vs Job Level                  
+ggplot(data2, aes(x=data2$TotalWorkingYears, y=data2$JobLevel) )+ geom_point() +  xlab("TotalWorkingYears") +  ylab("Job Level") +  geom_smooth()
+
+#Performance Rating vs Percent Salary Hike      
+ggplot(data2, aes(x=data2$PerformanceRating, y=data2$PercentSalaryHike) )+ geom_point() +  xlab("PerformanceRating") +  ylab("PercentSalaryHike") 
+
+#Monthly Income vs Total working years               
+ggplot(data2, aes(x=data2$MonthlyIncome, y=data2$TotalWorkingYears) )+ geom_point() +  xlab("MonthlyIncome") +  ylab("TotalWorkingYears") +  geom_smooth()
+
+#Years in currentrole vs Years in current company
+ggplot(data2, aes(x=data2$YearsInCurrentRole, y=data2$YearsAtCompany) )+ geom_point() +  xlab("YearsInCurrentRole") +  ylab("YearsInCurrentRole") +  geom_smooth()
+
+
+```
+
+##Crosstab
+Since this is an HR Dataset the focus will be mainly three factors:
+
+1. Performance 2. Attrition 3. Job Satitsfaction
+
+Cross tab will be used to analyse this.
+
+More specifically:
+
+1. Which department has the highest number of low performers? 
+
+     R & D 
+   
+2. Which Job Role has the highest number of low performers?
+
+     Sales Executive 
+
+3. Which department has the highest attrition?
+
+     R & D
+   
+4. Which job role has attrition?
+
+     Sales Executive
+    
+   
+5. Which department has the highest number of dis-satisfied employees?
+
+     R & D
+   
+6. Which Job Role has the highest number of dis-satisfied employees? 
+
+     Sales Executive
+
+R & D department and Sales excutives seems to be the common variables in low performance, high attrition and job satisfaction
+
+```{r}
+
+######################################Cross tab ANALysis################
+## use the variable with high corel we do cross tab
+
+
+#### PERFORMANCE ####
+
+#1.Which department has the highest number of low performers?
+crosstab=as.data.frame(table(data2$Department,data2$PerformanceRating))
+colnames(crosstab)<-c("Department","Performance Rating","Freq")
+#View(crosstab)
+ggplot(crosstab, aes(x=`Department`, y=`Freq`, fill=`Performance Rating`)) +   geom_bar(stat="identity") +  xlab("Department") +  ylab("Freq") +  theme_bw()
+
+
+#2.Which Job Role has the highest number of low performers?
+crosstab=as.data.frame(table(data2$JobRole,data2$PerformanceRating))
+colnames(crosstab)<-c("Job role","Performance Rating","Freq")
+#View(crosstab)
+
+ggplot(crosstab, aes(x=`Job role`, y=`Freq`, fill=`Performance Rating`)) +   geom_bar(stat="identity") +  xlab("Job role") +  ylab("Freq") +  theme_bw()+theme(axis.text.x=element_text(angle=60,hjust=1))
+
+
+ 
+##### Attrition ####
+
+#3.Which department has the highest attrition?
+crosstab=as.data.frame(table(data2$Department,data2$Attrition))
+colnames(crosstab)<-c("Department","Attrition","Freq")
+
+ggplot(crosstab, aes(x=`Department`, y=`Freq`, fill=`Attrition`)) +   geom_bar(stat="identity") +  xlab("Department") +  ylab("Freq") +  theme_bw()
+
+attr=crosstab%>%mutate(Percent=Freq/sum(Freq)*100) 
+#View(attr)
+
+
+
+#4.Which job role has attrition?
+
+crosstab=as.data.frame(table(data2$JobRole,data2$Attrition))
+colnames(crosstab)<-c("Job Role","Attrition","Freq")
+#View(crosstab)
+
+ggplot(crosstab, aes(x=`Job Role`, y=`Freq`, fill=`Attrition`)) +   geom_bar(stat="identity") +  xlab("Job Role") +  ylab("Freq") +  theme_bw()+theme(axis.text.x=element_text(angle=60,hjust=1))
+
+
+
+##### Job Satisfaction ####
+
+#5.Which department has the highest number of dis-satisfied employees?
+crosstab=as.data.frame(table(data2$Department,data2$JobSatisfaction))
+colnames(crosstab)<-c("Department","JobSatisfaction","Freq")
+#View(crosstab)
+
+ggplot(crosstab, aes(x=`Department`, y=`Freq`, fill=`JobSatisfaction`)) +   geom_bar(stat="identity") +  xlab("Department") +  ylab("Freq") +  theme_bw()
+
+#6.Which Job Role has the highest number of dis-satisfied employees? 
+crosstab=as.data.frame(table(data2$JobRole,data2$JobSatisfaction))
+colnames(crosstab)<-c("Job Role","JobSatisfaction","Freq")
+#View(crosstab)
+
+ggplot(crosstab, aes(x=`Job Role`, y=`Freq`, fill=`JobSatisfaction`)) +   geom_bar(stat="identity") +  xlab("Job Role") +  ylab("Freq") +  theme_bw()+theme(axis.text.x=element_text(angle=60,hjust=1))
+
+
+```
+
+##Segmentation
+
+Segment Sales Executive for further investigation
+
+Important Note: The Performance Rating of the employees is assumed to be on a 1-4 scale.But since there are no 1s or 2s, it can be said that everyone performing atleast satisfactorily. Since everyone is either a 3 or a 4 there is not enough variance to investigate poor performance.
+
+The focus will instead be on Attrition and Job Satisfaction
+
+1.Is there a correlation between sales exec attrition and Job satisfaction?
+
+-0.09232148 
+There is very weak negative correlation indicating that attrition is atleast partly caused by poor job satisfaction.
+
+2.Check for negative correlations with sales exec job satisfaction to determine what is causing it.
+
+Distance from home, Age, Relationship satisfaction and few other factors seem to weak negative corelation with job satisfaction.All these factors may be contributing to low job satisfaction.There is not enough data to establish anything conclusively.
+
+
+3.Check for most common properties of sales execs who are leaving.
+
+Most of them are single male 35 year olds with low work experience and no promotions who have beeen with the company for two years. Their education level, performance and satisfaction metrics are mostly 3 or below 3, so the company is loosing only averge or below average employees.
+
+
+
+```{r}
+
+
+#1.Is there a correlation between sales exec attrition and Job satisfaction?
+
+salesexec=data2%>%filter(`JobRole` == "Sales Executive")
+View(cor(salesexec$Attrition,salesexec$JobSatisfaction))
+
+
+
+#2.Check for negative correlations with sales exec job satisfaction to determine what is causing it. 
+
+#salesexec=salesexec%>%filter(`JobSatisfaction`<=2)
+num<-sapply(salesexec, is.numeric)
+numericalcols<-(salesexec[,num])
+
+View(apply(numericalcols,2, function(col)cor(col, numericalcols$JobSatisfaction)))
+
+
+#3.Check for most common properties of sales execs who are leaving.
+
+salesexec=salesexec%>%filter(`Attrition`==1)
+mode = sapply(salesexec, function (x){tail(names(sort(table(x))), 1)})
+View(mode)
+
+```
+
+Segement R&D Department for further investigation.
+
+1.Which job role has the highest attrition in R&D?
+
+Lab Technician 
+
+
+2.WHich job role has the maximum number of lowest job satisfaction in R&D?
+
+Lab Technician 
+
+3.Is there a correlation between lab technician attrition and Job satisfaction?
+
+There is a weak negative correlation of -0.1275758. Poor job satisfaction may be contributing to lab tech attrition.
+
+
+4.Check for negative correlations with lab technician job satisfaction to determine what is causing it. 
+
+Low hourly rate,low work experience and feww other factors seem to weak negative corelation with job satisfaction.All these factors may be contributing to low job satisfaction but the results are too inconclusive.
+
+5.Check for most common properties of lab technicians who are leaving.
+
+Most of them are single male 28 year olds with low work experience and no promotions who have been with the company for aroung a year. Their education level, performance and satisfaction metrics are mostly 3 or below 3, so the company is loosing only averge or below average employees.
+
+
+```{r}
+
+#1.Which job role has the highest attrition in R&D?
+
+rd=data2%>%filter(`Department` == "Research & Development", `Attrition` ==1)
+
+crosstab=as.data.frame(table(rd$JobRole,rd$Attrition))
+colnames(crosstab)<-c("JobROle","Attrition","Freq")
+View(head(crosstab%>%arrange(-Freq)))
+
+#2.Which job role has the maximum number of lowest job satisfaction in R&D?
+
+rd=data2%>%filter(`Department` == "Research & Development", `JobSatisfaction`==1)
+
+crosstab=as.data.frame(table(rd$JobRole,rd$JobSatisfaction))
+colnames(crosstab)<-c("JobROle","JobSatisfaction","Freq")
+View(head(crosstab%>%arrange(-Freq)))
+
+#3.Is there a correlation between lab technician attrition and Job satisfaction?
+
+lt=data2%>%filter(`JobRole` == "Laboratory Technician")
+View(cor(lt$Attrition,lt$JobSatisfaction))
+
+
+#4.Check for negative correlations with lab technician job satisfaction to determine what is causing it. 
+
+num<-sapply(lt, is.numeric)
+numericalcols<-(lt[,num])
+
+View(apply(numericalcols,2, function(col)cor(col, lt$JobSatisfaction)))
+
+#5.Check for most common properties of lab technicians who are leaving.
+
+lt=lt%>%filter(`Attrition`==1)
+mode = sapply(lt, function (x){tail(names(sort(table(x))), 1)})
+View(mode)
+
+```
+
+Other Observations:
+
+1.Relatively the highest percentage of low performers (90% with Perf Rating of 3) is in tier 5 administration.
+
+2.Low monthly income could be causing high attrition among laboratory technicians
+
+3.Lab Techs and sales execs have high attrition
+
+4.Max attrition at Job level 1 and 3 and Min Attrition at level 5
+
+```{r}
+
+#1.There seems to be relatively high number of low performers in tier 5 administration.
+##Stacked barplot
+
+crosstab=as.data.frame(table(data2$JobLevel,data2$PerformanceRating))
+colnames(crosstab)<-c("Job Level","Performance Rating","Freq")
+crosstab<-crosstab%>%group_by(`Job Level`)%>%mutate(Percent = Freq/sum(`Freq`)*100)
+#View(crosstab)
+
+ggplot(crosstab, aes(x=`Job Level`, y=`Freq`, fill=`Performance Rating`)) +   geom_bar(stat="identity") +  xlab("Job Level") +  ylab("Freq") +  theme_bw()
+
+
+#2.Low monthly income could be causing high attrition among laboratory technicians
+##boxplot
+ggplot(data = data2, aes(x=`JobRole`, y=`MonthlyIncome`)) + geom_boxplot()+theme(axis.text.x=element_text(angle=60,hjust=1))
+
+#3. Lab Techs and sales execs have high attrition
+ggplot(data2, aes(x=`JobRole`, y=`JobSatisfaction`,fill=`Attrition`))+ geom_bar(stat="identity") +  xlab("Job Role") +  ylab("JobSatisfaction") +  theme_bw() +theme(axis.text.x=element_text(angle=60,hjust=1))
+
+
+#4. Max attrition at Job level 1 and 3 and Min Attrition at level 5 
+crosstab=as.data.frame(table(data2$JobLevel,data2$Attrition))
+colnames(crosstab)<-c("Job Level","Attrition","Freq")
+crosstab<-crosstab%>%group_by(`Job Level`)%>%mutate(Percent = Freq/sum(`Freq`)*100)
+#View(crosstab)
+ggplot(crosstab, aes(x=`Job Level`, y=`Freq`, fill=`Attrition`)) +   geom_bar(stat="identity") +  xlab("Job Level") +  ylab("Freq") +  theme_bw()
+
+
+
+```
+
+##Final Conclusion: 
+
+Low performing level 5 senior management  has possibly caused the business to stagnate. This results in fewer oppurtunites and benefits for Level 1 and  Level 3 employees for better salary, promotion etc causing poor job satisfaction and their exit. 
+
+Though most employees leaving like lab techs and sales execs are of lesser importance to the company, attrition of research scientist should be cause for concern (refer-#1.Which job role has the highest attrition in R&D?). The data indicates this to be the HR data of a pharma company. Loss of research personnel could lead to poor performance of R&D which is the core of pharma companies.
+
